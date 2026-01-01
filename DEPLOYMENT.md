@@ -29,7 +29,7 @@
 ssh -i your-key.pem ubuntu@your-ec2-public-ip
 
 # Update system
-sudo apt update && sudo apt upgrade -y
+sudo apt install docker-compose -y
 
 # Install Docker
 curl -fsSL https://get.docker.com -o get-docker.sh
@@ -72,7 +72,8 @@ docker logs -f agent
 
 #### Step 4: Test
 ```bash
-curl http://your-ec2-public-ip:8000/health
+# Correct usage (no extra slash before the port):
+curl http://44.199.244.38:8000/health
 ```
 
 ---

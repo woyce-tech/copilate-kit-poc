@@ -18,5 +18,7 @@ COPY . .
 # Expose port
 EXPOSE 8000
 
-# Run the agent
-CMD ["python", "main.py"]
+# Run FastAPI app with uvicorn so the container provides a health endpoint
+# and keeps the process alive. The real LangGraph runtime should be
+# deployed separately for production; this provides a minimal POC server.
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
