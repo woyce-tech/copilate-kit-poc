@@ -5,13 +5,12 @@ FROM python:3.12-slim
 WORKDIR /app
 
 # Copy dependency files
+# Copy dependency files
 COPY pyproject.toml ./
+COPY requirements.txt ./
 
-# Install dependencies
-# Pin Poetry to a 1.x release (modern "poetry" package v2 has a different CLI)
-RUN pip install --no-cache-dir "poetry==1.5.1" && \
-    poetry config virtualenvs.create false && \
-    poetry install --no-dev
+# Install dependencies via pip using requirements.txt (avoids poetry/pyproject differences)
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY . .
