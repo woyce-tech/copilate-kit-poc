@@ -8,7 +8,8 @@ WORKDIR /app
 COPY pyproject.toml ./
 
 # Install dependencies
-RUN pip install --no-cache-dir poetry && \
+# Pin Poetry to a 1.x release (modern "poetry" package v2 has a different CLI)
+RUN pip install --no-cache-dir "poetry==1.5.1" && \
     poetry config virtualenvs.create false && \
     poetry install --no-dev
 
