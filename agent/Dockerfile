@@ -1,5 +1,6 @@
 # Dockerfile for Python LangGraph Agent
-FROM python:3.11-slim
+# Use Python 3.12 to match project requirement (pyproject requires >=3.12)
+FROM python:3.12-slim
 
 WORKDIR /app
 
