@@ -11,7 +11,7 @@
     "start": "next start",
     "lint": "eslint .",
     "install:agent": "sh ./scripts/setup-agent.sh || scripts\\setup-agent.bat",
-    "postinstall": "npm run install:agent"
+    "postinstall": "node -e \"if(!process.env.VERCEL){require('child_process').execSync('npm run install:agent',{stdio:'inherit'});}\""
   },
   "dependencies": {
     "@copilotkit/react-core": "1.50.1",
