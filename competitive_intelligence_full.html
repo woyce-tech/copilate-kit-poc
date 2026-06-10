@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Competitive Intelligence | Sydon</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #0f172a;
+            color: #f1f5f9;
+            line-height: 1.6;
+            padding: 24px;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-spinner {
+            text-align: center;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #334155;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Product Selector */
+        .product-selector {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 16px 24px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .selector-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .selector-label {
+            color: #94a3b8;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .product-dropdown {
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: #f1f5f9;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            min-width: 350px;
+        }
+
+        .selector-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .sync-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #10b981;
+            font-size: 13px;
+        }
+
+        .sync-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .sync-status.syncing .sync-dot {
+            background: #f59e0b;
+            animation: spin 1s linear infinite;
+        }
+
+        /* Page Header */
+        .page-header {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 24px 32px;
+            margin-bottom: 24px;
+        }
+
+        .page-header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .page-subtitle {
+            color: #94a3b8;
+            font-size: 15px;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #334155;
+            color: #f1f5f9;
+            border: 1px solid #475569;
+        }
+
+        .btn-secondary:hover {
+            background: #475569;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-agent-handoff {
+            background: #1e3a8a;
+            color: #93c5fd;
+            border: 1px solid #3b82f6;
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 8px 16px;
+        }
+
+        .btn-agent-handoff:hover {
+            background: #1e40af;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .agent-label {
+            font-size: 10px;
+            opacity: 0.8;
+        }
+
+        /* Market Alert */
+        .market-alert {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            border-radius: 12px;
+            padding: 20px 28px;
+            margin-bottom: 24px;
+            border-left: 4px solid #fbbf24;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .alert-content {
+            flex: 1;
+        }
+
+        .alert-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .alert-description {
+            font-size: 14px;
+            opacity: 0.95;
+        }
+
+        /* Activity Stats */
+        .activity-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .activity-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .activity-card:hover {
+            border-color: #475569;
+            transform: translateY(-2px);
+        }
+
+        .activity-card.alert {
+            border-left: 4px solid #ef4444;
+        }
+
+        .activity-card.warning {
+            border-left: 4px solid #f59e0b;
+        }
+
+        .activity-card.info {
+            border-left: 4px solid #06b6d4;
+        }
+
+        .activity-card.success {
+            border-left: 4px solid #10b981;
+        }
+
+        .activity-label {
+            color: #94a3b8;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .activity-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .activity-detail {
+            font-size: 13px;
+            color: #cbd5e1;
+        }
+
+        /* Graphs */
+        .graphs-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .graph-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+
+        .chart-container-small {
+            position: relative;
+            height: 250px;
+            width: 100%;
+        }
+
+        .chart-container-mini {
+            position: relative;
+            height: 200px;
+            width: 100%;
+        }
+
+        .graph-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .graph-title {
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .graph-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .tab {
+            padding: 6px 12px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #94a3b8;
+        }
+
+        .tab.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        /* Section */
+        .section {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #334155;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Movement Cards */
+        .movement-card {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            transition: all 0.2s;
+        }
+
+        .movement-card:hover {
+            border-color: #3b82f6;
+            transform: translateX(4px);
+        }
+
+        .movement-card.critical {
+            border-left: 4px solid #ef4444;
+        }
+
+        .movement-card.opportunity {
+            border-left: 4px solid #10b981;
+        }
+
+        .movement-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+        }
+
+        .competitor-name {
+            font-weight: 700;
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        .competitor-asin {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .movement-time {
+            font-size: 12px;
+            color: #94a3b8;
+            text-align: right;
+        }
+
+        .movement-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+
+        .badge-threat {
+            background: #7f1d1d;
+            color: #fca5a5;
+        }
+
+        .badge-opportunity {
+            background: #064e3b;
+            color: #6ee7b7;
+        }
+
+        .movement-changes {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .change-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 6px;
+        }
+
+        .change-icon {
+            font-size: 20px;
+        }
+
+        .change-content {
+            flex: 1;
+        }
+
+        .change-label {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 2px;
+        }
+
+        .change-value {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .change-value.negative {
+            color: #10b981;
+        }
+
+        .change-value.positive {
+            color: #ef4444;
+        }
+
+        .movement-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 32px;
+            max-width: 700px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #334155;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 28px;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            color: #f1f5f9;
+        }
+
+        .modal-body {
+            margin-bottom: 24px;
+        }
+
+        .detail-item {
+            padding: 16px;
+            background: #0f172a;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .detail-label {
+            font-size: 12px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .detail-value {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 16px 24px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+        }
+
+        .toast.show {
+            display: flex;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 1400px) {
+            .graphs-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <div style="font-size: 16px; color: #94a3b8;">Loading competitor data...</div>
+        </div>
+    </div>
+
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>🎯 Competitive Intelligence</h1>
+            <p class="page-subtitle">Real-time monitoring of competitor actions, market movements, and competitive threats</p>
+        </div>
+
+		<div class="container">
+        <!-- Product Selector -->
+        <div class="product-selector">
+            <div class="selector-left">
+                <span class="selector-label">Monitoring Competitors For:</span>
+                <select class="product-dropdown" id="productSelector" onchange="switchProduct()">
+                    <option value="earbuds">🎧 Premium Wireless Earbuds Pro (B09XYZ789)</option>
+                    <option value="powerbank">🔋 Portable Power Bank 20000mAh (B08ABC456)</option>
+                    <option value="phonecase">📱 Phone Case - Heavy Duty (B07DEF123)</option>
+                </select>
+            </div>
+            <div class="selector-right">
+                <div class="sync-status" id="syncStatus">
+                    <span class="sync-dot"></span>
+                    <span id="syncText">Live • Updated 2m ago</span>
+                </div>
+                <button class="btn btn-primary btn-small" onclick="refreshData()">🔄 Refresh</button>
+            </div>
+        </div>
+		
+        <!-- Market Alert -->
+        <div class="market-alert" id="marketAlert">
+            <div class="alert-content">
+                <div class="alert-title">⚡ High Market Activity Detected</div>
+                <div class="alert-description" id="alertDescription">
+                    Loading...
+                </div>
+            </div>
+            <div class="alert-actions">
+                <button class="btn btn-secondary btn-small" onclick="showTimeline()">View Timeline</button>
+            </div>
+        </div>
+
+        <!-- Activity Stats -->
+        <div class="activity-stats" id="activityStats">
+            <!-- Dynamically populated -->
+        </div>
+
+        <!-- Graphs -->
+        <div class="graphs-grid">
+            <!-- Price Chart -->
+            <div class="graph-card">
+                <div class="graph-header">
+                    <h3 class="graph-title">
+                        <span>📈</span>
+                        Competitive Price Tracking
+                    </h3>
+                    <div class="graph-controls">
+                        <button class="tab" onclick="changePriceRange(7)">7D</button>
+                        <button class="tab active" onclick="changePriceRange(30)">30D</button>
+                        <button class="tab" onclick="changePriceRange(90)">90D</button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="priceChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Market Share -->
+            <div class="graph-card">
+                <div class="graph-header">
+                    <h3 class="graph-title">
+                        <span>🥧</span>
+                        Market Share
+                    </h3>
+                </div>
+                <div class="chart-container-small">
+                    <canvas id="marketShareChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- BSR Trends -->
+        <div class="graph-card" style="margin-bottom: 24px;">
+            <div class="graph-header">
+                <h3 class="graph-title">
+                    <span>📊</span>
+                    Competitor BSR Trends (7 Days)
+                </h3>
+                <button class="btn btn-secondary btn-small">Compare More</button>
+            </div>
+            <div class="chart-container-mini">
+                <canvas id="bsrChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Movement Cards -->
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <span>🚨</span>
+                    Critical Competitor Movements
+                </h2>
+                <button class="btn btn-secondary btn-small">Critical Only</button>
+            </div>
+            <div id="movementCards">
+                <!-- Dynamically populated -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail Modal -->
+    <div class="modal" id="detailModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Competitor Details</h2>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Dynamically populated -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <span id="toastIcon">✅</span>
+        <span id="toastMessage">Action completed!</span>
+    </div>
+
+    <script>
+        // MOCK DATA
+        const MOCK_DATA = {
+            earbuds: {
+                productName: "Premium Wireless Earbuds Pro",
+                asin: "B09XYZ789",
+                alertSummary: "8 competitors made significant changes in the last 24 hours • 3 price drops • 2 new entrants • 1 major stock-out",
+                activityStats: {
+                    priceChanges: { count: 8, detail: "3 critical drops • Avg -12%" },
+                    reviewSpikes: { count: 2, detail: "AudioTech +462% • BrandZ +320%" },
+                    stockOuts: { count: 1, detail: "MarketLeader • 450 units/day" },
+                    newEntrants: { count: 2, detail: "UltraSound • BassPro" },
+                    featureUpdates: { count: 3, detail: "Wireless charging added" },
+                    promotions: { count: 5, detail: "Up to 30% off detected" }
+                },
+                priceHistory: {
+                    labels: ['Nov 5', 'Nov 8', 'Nov 11', 'Nov 14', 'Nov 17', 'Nov 20', 'Nov 23', 'Nov 26', 'Nov 29', 'Dec 2', 'Dec 5'],
+                    yourPrice: [74.99, 74.99, 74.99, 74.99, 74.99, 74.99, 74.99, 74.99, 74.99, 74.99, 74.99],
+                    competitors: {
+                        SoundMax: [74.99, 74.99, 74.99, 72.99, 72.99, 69.99, 69.99, 69.99, 62.49, 62.49, 62.49],
+                        AudioTech: [69.99, 69.99, 69.99, 69.99, 69.99, 69.99, 69.99, 69.99, 69.99, 69.99, 69.99],
+                        BassBoost: [59.99, 59.99, 59.99, 59.99, 59.99, 59.99, 59.99, 59.99, 59.99, 59.99, 59.99],
+                        MarketLeader: [72.99, 72.99, 72.99, 72.99, 72.99, 72.99, 72.99, 72.99, 72.99, 72.99, null],
+                        average: [69.49, 69.49, 69.49, 68.74, 68.74, 66.74, 66.74, 66.74, 66.12, 66.12, 66.12]
+                    }
+                },
+                marketShare: {
+                    labels: ['SoundMax', 'AudioTech', 'You', 'MarketLeader', 'Others'],
+                    data: [23, 18, 15, 12, 32]
+                },
+                bsrTrends: {
+                    labels: ['Nov 29', 'Nov 30', 'Dec 1', 'Dec 2', 'Dec 3', 'Dec 4', 'Dec 5'],
+                    data: {
+                        SoundMax: [1234, 1156, 1089, 982, 934, 892, 892],
+                        AudioTech: [1456, 1423, 1398, 1312, 1289, 1256, 1234],
+                        UltraSound: [4567, 3892, 3234, 2567, 1892, 1234, 892]
+                    }
+                },
+                movements: [
+                    {
+                        competitor: "SoundMax Pro X",
+                        asin: "B07ABC123",
+                        timestamp: "1.5 hours ago",
+                        type: "critical",
+                        badge: "Threat",
+                        changes: [
+                            { icon: "💰", label: "Price Change", value: "$74.99 → $62.49 (-17%)", negative: true },
+                            { icon: "📊", label: "BSR Movement", value: "#1,234 → #892 (⬆️ +342)", negative: true },
+                            { icon: "📈", label: "Sales Velocity", value: "450 → 600 units/day (+33%)", positive: true }
+                        ]
+                    },
+                    {
+                        competitor: "MarketLeader Audio",
+                        asin: "B09GHI789",
+                        timestamp: "5 hours ago",
+                        type: "opportunity",
+                        badge: "Opportunity",
+                        changes: [
+                            { icon: "📦", label: "Inventory Status", value: "In Stock → Out of Stock", positive: true },
+                            { icon: "💵", label: "Available Demand", value: "~450 units/day ($16,200 opportunity)", neutral: true },
+                            { icon: "⏱️", label: "Est. Restock", value: "7-14 days (based on history)", neutral: true }
+                        ]
+                    },
+                    {
+                        competitor: "AudioTech Elite",
+                        asin: "B08DEF456",
+                        timestamp: "3 hours ago",
+                        type: "critical",
+                        badge: "Threat",
+                        changes: [
+                            { icon: "⭐", label: "Review Activity", value: "45 reviews in 7 days (+462%)", positive: true },
+                            { icon: "📢", label: "Likely Cause", value: "Vine program or giveaway campaign", neutral: true }
+                        ]
+                    }
+                ]
+            },
+            powerbank: {
+                productName: "Portable Power Bank 20000mAh",
+                asin: "B08ABC456",
+                alertSummary: "5 competitors made changes in the last 24 hours • 2 price increases • 1 new feature • 1 stock-out",
+                activityStats: {
+                    priceChanges: { count: 5, detail: "2 increases • Avg +8%" },
+                    reviewSpikes: { count: 1, detail: "PowerPlus +280%" },
+                    stockOuts: { count: 1, detail: "ChargeMax • 320 units/day" },
+                    newEntrants: { count: 1, detail: "MegaCharge Pro" },
+                    featureUpdates: { count: 2, detail: "Fast charge 2.0" },
+                    promotions: { count: 3, detail: "Up to 25% off" }
+                },
+                priceHistory: {
+                    labels: ['Nov 5', 'Nov 8', 'Nov 11', 'Nov 14', 'Nov 17', 'Nov 20', 'Nov 23', 'Nov 26', 'Nov 29', 'Dec 2', 'Dec 5'],
+                    yourPrice: [39.99, 39.99, 39.99, 39.99, 39.99, 39.99, 39.99, 39.99, 39.99, 39.99, 39.99],
+                    competitors: {
+                        Anker: [44.99, 44.99, 44.99, 44.99, 44.99, 44.99, 44.99, 44.99, 47.99, 47.99, 47.99],
+                        RAVPower: [42.99, 42.99, 42.99, 42.99, 42.99, 42.99, 42.99, 42.99, 42.99, 45.99, 45.99],
+                        PowerCore: [34.99, 34.99, 34.99, 34.99, 34.99, 34.99, 34.99, 34.99, 34.99, 34.99, 34.99],
+                        average: [40.74, 40.74, 40.74, 40.74, 40.74, 40.74, 40.74, 40.74, 41.74, 42.24, 42.24]
+                    }
+                },
+                marketShare: {
+                    labels: ['Anker', 'RAVPower', 'You', 'PowerCore', 'Others'],
+                    data: [28, 22, 18, 14, 18]
+                },
+                bsrTrends: {
+                    labels: ['Nov 29', 'Nov 30', 'Dec 1', 'Dec 2', 'Dec 3', 'Dec 4', 'Dec 5'],
+                    data: {
+                        Anker: [456, 445, 423, 412, 398, 387, 378],
+                        RAVPower: [789, 778, 756, 734, 723, 712, 698],
+                        PowerCore: [1234, 1198, 1167, 1145, 1123, 1098, 1076]
+                    }
+                },
+                movements: [
+                    {
+                        competitor: "Anker PowerCore",
+                        asin: "B08XYZ123",
+                        timestamp: "2 hours ago",
+                        type: "critical",
+                        badge: "Threat",
+                        changes: [
+                            { icon: "💰", label: "Price Change", value: "$44.99 → $47.99 (+7%)", positive: false },
+                            { icon: "⭐", label: "Feature Added", value: "Fast Charge 2.0 technology", neutral: true },
+                            { icon: "📊", label: "BSR Movement", value: "#456 → #378 (⬆️ +78)", negative: true }
+                        ]
+                    }
+                ]
+            },
+            phonecase: {
+                productName: "Phone Case - Heavy Duty",
+                asin: "B07DEF123",
+                alertSummary: "4 competitors made changes • 1 price drop • 2 new designs • High promotion activity",
+                activityStats: {
+                    priceChanges: { count: 4, detail: "1 drop • Avg -5%" },
+                    reviewSpikes: { count: 1, detail: "CaseX +180%" },
+                    stockOuts: { count: 0, detail: "None detected" },
+                    newEntrants: { count: 2, detail: "ArmorCase • ShieldPro" },
+                    featureUpdates: { count: 4, detail: "New colors/designs" },
+                    promotions: { count: 7, detail: "Up to 40% off" }
+                },
+                priceHistory: {
+                    labels: ['Nov 5', 'Nov 8', 'Nov 11', 'Nov 14', 'Nov 17', 'Nov 20', 'Nov 23', 'Nov 26', 'Nov 29', 'Dec 2', 'Dec 5'],
+                    yourPrice: [19.99, 19.99, 19.99, 19.99, 19.99, 19.99, 19.99, 19.99, 19.99, 19.99, 19.99],
+                    competitors: {
+                        OtterBox: [34.99, 34.99, 34.99, 34.99, 34.99, 34.99, 34.99, 34.99, 34.99, 34.99, 34.99],
+                        Spigen: [24.99, 24.99, 24.99, 24.99, 24.99, 24.99, 22.99, 22.99, 22.99, 22.99, 22.99],
+                        Caseology: [16.99, 16.99, 16.99, 16.99, 16.99, 16.99, 16.99, 16.99, 16.99, 16.99, 16.99],
+                        average: [24.24, 24.24, 24.24, 24.24, 24.24, 24.24, 23.74, 23.74, 23.74, 23.74, 23.74]
+                    }
+                },
+                marketShare: {
+                    labels: ['OtterBox', 'Spigen', 'You', 'Caseology', 'Others'],
+                    data: [32, 24, 16, 12, 16]
+                },
+                bsrTrends: {
+                    labels: ['Nov 29', 'Nov 30', 'Dec 1', 'Dec 2', 'Dec 3', 'Dec 4', 'Dec 5'],
+                    data: {
+                        OtterBox: [234, 228, 223, 218, 212, 207, 203],
+                        Spigen: [567, 556, 545, 534, 523, 512, 501],
+                        Caseology: [1234, 1223, 1212, 1198, 1187, 1176, 1165]
+                    }
+                },
+                movements: [
+                    {
+                        competitor: "Spigen Tough Armor",
+                        asin: "B07GHI456",
+                        timestamp: "4 hours ago",
+                        type: "critical",
+                        badge: "Threat",
+                        changes: [
+                            { icon: "💰", label: "Price Change", value: "$24.99 → $22.99 (-8%)", negative: true },
+                            { icon: "🎨", label: "New Colors", value: "Added 3 new color options", neutral: true }
+                        ]
+                    }
+                ]
+            }
+        };
+
+        // Current state
+        let currentProduct = 'earbuds';
+        let currentData = MOCK_DATA[currentProduct];
+        let priceChart, marketShareChart, bsrChart;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProductData(currentProduct);
+        });
+
+        // Switch product
+        function switchProduct() {
+            const select = document.getElementById('productSelector');
+            currentProduct = select.value;
+            
+            showLoading();
+            
+            setTimeout(() => {
+                currentData = MOCK_DATA[currentProduct];
+                loadProductData(currentProduct);
+                hideLoading();
+                showToast(`Switched to ${currentData.productName}`, '✅');
+            }, 1000);
+        }
+
+        // Refresh data
+        function refreshData() {
+            const syncStatus = document.getElementById('syncStatus');
+            syncStatus.classList.add('syncing');
+            document.getElementById('syncText').textContent = 'Syncing...';
+            
+            showToast('Refreshing from Keepa, SP-API, RainforestAPI...', '🔄');
+            
+            setTimeout(() => {
+                syncStatus.classList.remove('syncing');
+                document.getElementById('syncText').textContent = 'Live • Updated just now';
+                loadProductData(currentProduct);
+                showToast('All competitor data refreshed!', '✅');
+            }, 2000);
+        }
+
+        // Load product data
+        function loadProductData(productKey) {
+            const data = MOCK_DATA[productKey];
+            
+            // Update alert
+            document.getElementById('alertDescription').textContent = data.alertSummary;
+            
+            // Update activity stats
+            renderActivityStats(data.activityStats);
+            
+            // Update charts
+            renderPriceChart(data.priceHistory);
+            renderMarketShareChart(data.marketShare);
+            renderBSRChart(data.bsrTrends);
+            
+            // Update movement cards
+            renderMovementCards(data.movements);
+        }
+
+        // Render activity stats
+        function renderActivityStats(stats) {
+            const container = document.getElementById('activityStats');
+            container.innerHTML = `
+                <div class="activity-card alert">
+                    <div class="activity-label">Price Changes (24h)</div>
+                    <div class="activity-value">${stats.priceChanges.count}</div>
+                    <div class="activity-detail">${stats.priceChanges.detail}</div>
+                </div>
+                <div class="activity-card warning">
+                    <div class="activity-label">Review Velocity Spikes</div>
+                    <div class="activity-value">${stats.reviewSpikes.count}</div>
+                    <div class="activity-detail">${stats.reviewSpikes.detail}</div>
+                </div>
+                <div class="activity-card success">
+                    <div class="activity-label">Stock-Outs Detected</div>
+                    <div class="activity-value">${stats.stockOuts.count}</div>
+                    <div class="activity-detail">${stats.stockOuts.detail}</div>
+                </div>
+                <div class="activity-card info">
+                    <div class="activity-label">New Competitors</div>
+                    <div class="activity-value">${stats.newEntrants.count}</div>
+                    <div class="activity-detail">${stats.newEntrants.detail}</div>
+                </div>
+                <div class="activity-card alert">
+                    <div class="activity-label">Feature Updates</div>
+                    <div class="activity-value">${stats.featureUpdates.count}</div>
+                    <div class="activity-detail">${stats.featureUpdates.detail}</div>
+                </div>
+                <div class="activity-card warning">
+                    <div class="activity-label">Active Promotions</div>
+                    <div class="activity-value">${stats.promotions.count}</div>
+                    <div class="activity-detail">${stats.promotions.detail}</div>
+                </div>
+            `;
+        }
+
+        // Render price chart
+        function renderPriceChart(data) {
+            const ctx = document.getElementById('priceChart');
+            
+            if (priceChart) {
+                priceChart.destroy();
+                priceChart = null;
+            }
+            
+            priceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        {
+                            label: 'Your Price',
+                            data: data.yourPrice,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'SoundMax',
+                            data: data.competitors.SoundMax || data.competitors.Anker || data.competitors.OtterBox,
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'AudioTech',
+                            data: data.competitors.AudioTech || data.competitors.RAVPower || data.competitors.Spigen,
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Market Average',
+                            data: data.average,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#94a3b8',
+                                font: { size: 12 }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: '#334155' }
+                        },
+                        x: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: '#334155' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Render market share chart
+        function renderMarketShareChart(data) {
+            const ctx = document.getElementById('marketShareChart');
+            
+            if (marketShareChart) {
+                marketShareChart.destroy();
+                marketShareChart = null;
+            }
+            
+            marketShareChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        data: data.data,
+                        backgroundColor: [
+                            '#ef4444',
+                            '#f59e0b',
+                            '#3b82f6',
+                            '#10b981',
+                            '#94a3b8'
+                        ],
+                        borderColor: '#1e293b',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#94a3b8',
+                                font: { size: 11 },
+                                padding: 10
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Render BSR chart
+        function renderBSRChart(data) {
+            const ctx = document.getElementById('bsrChart');
+            
+            if (bsrChart) {
+                bsrChart.destroy();
+                bsrChart = null;
+            }
+            
+            const datasets = [];
+            const colors = ['#ef4444', '#f59e0b', '#3b82f6'];
+            let i = 0;
+            
+            for (const [name, values] of Object.entries(data.data)) {
+                datasets.push({
+                    label: name,
+                    data: values,
+                    borderColor: colors[i],
+                    backgroundColor: colors[i] + '20',
+                    borderWidth: 2,
+                    tension: 0.4
+                });
+                i++;
+            }
+            
+            bsrChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#94a3b8',
+                                font: { size: 12 }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            reverse: true,
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: '#334155' }
+                        },
+                        x: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: '#334155' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Render movement cards
+        function renderMovementCards(movements) {
+            const container = document.getElementById('movementCards');
+            
+            container.innerHTML = movements.map(movement => `
+                <div class="movement-card ${movement.type}">
+                    <div class="movement-header">
+                        <div>
+                            <div class="competitor-name">${movement.competitor}</div>
+                            <div class="competitor-asin">ASIN: ${movement.asin}</div>
+                        </div>
+                        <div>
+                            <div class="movement-time">${movement.timestamp}</div>
+                            <span class="movement-badge badge-${movement.type === 'opportunity' ? 'opportunity' : 'threat'}">
+                                ${movement.badge}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="movement-changes">
+                        ${movement.changes.map(change => `
+                            <div class="change-item">
+                                <span class="change-icon">${change.icon}</span>
+                                <div class="change-content">
+                                    <div class="change-label">${change.label}</div>
+                                    <div class="change-value ${change.negative ? 'negative' : change.positive ? 'positive' : ''}">
+                                        ${change.value}
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <div class="movement-actions">
+                        ${renderMovementButtons(movement)}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Render movement buttons
+        function renderMovementButtons(movement) {
+            if (movement.type === 'opportunity') {
+                return `
+                    <button class="btn btn-agent-handoff btn-small" onclick="handoffToPPC('${movement.competitor}')">
+                        → PPC Budget Guardian
+                        <div class="agent-label">Increase bids 40%</div>
+                    </button>
+                    <button class="btn btn-agent-handoff btn-small" onclick="handoffToKeywords('${movement.competitor}')">
+                        → Keyword Tracker
+                        <div class="agent-label">Target keywords</div>
+                    </button>
+                    <button class="btn btn-secondary btn-small" onclick="setAlert('${movement.competitor}')">
+                        🔔 Alert on Restock
+                    </button>
+                `;
+            } else {
+                if (movement.changes.some(c => c.label === 'Review Activity')) {
+                    return `
+                        <button class="btn btn-agent-handoff btn-small" onclick="handoffToReviews('${movement.competitor}')">
+                            → Review Intelligence
+                            <div class="agent-label">Analyze sentiment</div>
+                        </button>
+                        <button class="btn btn-secondary btn-small" onclick="analyzeCompetitor('${movement.competitor}')">
+                            View Reviews
+                        </button>
+                    `;
+                } else {
+                    return `
+                        <button class="btn btn-danger btn-small" onclick="analyzeCompetitor('${movement.competitor}')">
+                            🔍 Deep Analysis
+                        </button>
+                        <button class="btn btn-agent-handoff btn-small" onclick="handoffToPricing('${movement.competitor}')">
+                            → Dynamic Pricing
+                            <div class="agent-label">Match their price</div>
+                        </button>
+                        <button class="btn btn-secondary btn-small" onclick="compareFeatures('${movement.competitor}')">
+                            Compare Features
+                        </button>
+                    `;
+                }
+            }
+        }
+
+        // Agent handoffs
+        function handoffToPricing(competitor) {
+            showToast(`Handing off to Dynamic Pricing Agent...`, '🔄');
+            setTimeout(() => {
+                showToast(`Dynamic Pricing: Analyzing strategy for ${competitor}`, '💰');
+            }, 1000);
+        }
+
+        function handoffToPPC(competitor) {
+            showToast(`Handing off to PPC Budget Guardian...`, '🔄');
+            setTimeout(() => {
+                showToast(`PPC Guardian: Preparing bid strategy for ${competitor} opportunity`, '🎯');
+            }, 1000);
+        }
+
+        function handoffToKeywords(competitor) {
+            showToast(`Handing off to Keyword Rank Tracker...`, '🔄');
+            setTimeout(() => {
+                showToast(`Keyword Tracker: Loading ${competitor}'s keywords...`, '🔑');
+            }, 1000);
+        }
+
+        function handoffToReviews(competitor) {
+            showToast(`Handing off to Review Intelligence...`, '🔄');
+            setTimeout(() => {
+                showToast(`Review Intelligence: Analyzing ${competitor}'s campaign`, '⭐');
+            }, 1000);
+        }
+
+        // Other functions
+        function analyzeCompetitor(name) {
+            showModal('Competitor Deep Analysis', `
+                <div class="detail-item">
+                    <div class="detail-label">Competitor</div>
+                    <div class="detail-value">${name}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Analysis Type</div>
+                    <div class="detail-value">Full competitive profile analysis</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Available Data</div>
+                    <div class="detail-value">
+                        • 90-day price history<br>
+                        • Feature comparison<br>
+                        • Review sentiment analysis<br>
+                        • Market positioning<br>
+                        • Sales velocity trends
+                    </div>
+                </div>
+            `);
+        }
+
+        function compareFeatures(name) {
+            showToast(`Loading feature comparison with ${name}...`, '📊');
+        }
+
+        function setAlert(name) {
+            showToast(`Alert created for ${name} restock notification`, '🔔');
+        }
+
+        function showTimeline() {
+            showToast('Opening 24-hour activity timeline...', '📅');
+        }
+
+        function changePriceRange(days) {
+            document.querySelectorAll('.graph-controls .tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            showToast(`Loading ${days}-day price history...`, '📊');
+        }
+
+        // Modal functions
+        function showModal(title, content) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalBody').innerHTML = content;
+            document.getElementById('detailModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('detailModal').classList.remove('active');
+        }
+
+        // Loading
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.add('active');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('active');
+        }
+
+        // Toast
+        function showToast(message, icon = '✅') {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastIcon').textContent = icon;
+            document.getElementById('toastMessage').textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // Close modal on outside click
+        document.getElementById('detailModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
